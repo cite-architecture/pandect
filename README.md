@@ -1,4 +1,7 @@
-pandect
-=======
+#pandect#
 
-A citegraph viewer
+
+A citegraph viewer.
+
+Some initial notes in the project wiki.
+
