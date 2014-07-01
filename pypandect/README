@@ -1,6 +1,16 @@
-1.  You will need to get libcptl > v0.3 from https://github.com/ITI/cptl-power/
-2.  You will need CherryPy (http://www.cherrypy.org)
-3.  You will also need NetworkX (https://networkx.github.io)
+P R E R E Q U I S I T E S
+c h e r r y  p y
+1.  You will need CherryPy (http://www.cherrypy.org)
+
+n e t w o r k x  
+1.  You will also need NetworkX (https://networkx.github.io)
+
+c p t l
+1.  bash$ git clone https://github.com/ITI/cptl-power/
+2.  cd cptl-power
+3.  git checkout v0.4       
+4.  make validate
+5.  make test
 
 G E T T I N G  S T A R T E D
 c o n f i g
