@@ -1,0 +1,337 @@
+<!doctype html>
+<!--
+copyright (c) 2014, Gabriel A. Weaver, Coordinated Science Laboratory 
+at the University of Illinois at Urbana-Champaign.
+
+This file is part of the Pandect Graph Browser distribution.
+
+The code is free software:   you can redistribute 
+it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version
+3 of the License, or (at your option) any later version.
+
+The Pandect Graph Browser distribution
+is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see http://www.gnu.org/licenses/
+-->
+<html lang="en">
+  <head>
+    <title>Pandect</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css"/>
+    <link href="/static/css/style.css" rel="stylesheet"/>
+    <script type="text/javascript"
+       src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript"
+     src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
+    <script type="text/javascript"
+       src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/fisheye.js"></script>
+    <script type="text/javascript" src="/static/js/visualizations.js"></script>
+    <script type="text/javascript">
+
+      (function($) {
+      // You pass-in jQuery and then alias it with the $-sign
+      // So your internal code doesn't change
+      })(jQuery);
+
+      // Global State VARIABLES
+      var selected_asset_urns = {};
+      var selected_asset_type_urns = {};
+      var selected_edge_urns = "";
+      var selected_edge_type_urns = "";
+
+      // Graph Panel VARS & METHODS
+      var container_id = "graph-panel-content";
+      var svg_graph_id = container_id + "-svg";
+      var vis_type = "FORCE_DIRECTED_FISHEYE"
+      var width = 800,
+            height = 500;
+
+      var div = d3.select("body").append("div")
+	  .attr("class", "tooltip")
+	  .style("opacity", 0);
+
+      // Specific Data Source Type Method
+      $(document).ready(function() {
+
+	 $("#update-graph-panel").click(function() { 
+	   datasource1 = "urn:nmap:NAMESPACE:NETWORKS:NETWORK.HOST";
+	   update_graph_panel(datasource=datasource1, selected_vertex_urns=null); 
+         });
+
+         // Adjacent Edge Types Panel METHODS
+         $("#update-adjacent-edge-types-panel").click(function(e) {
+            var encoded_selected_vertex_type_urns = [];
+            var selected_vertex_type_urns = Object.keys(selected_asset_type_urns)
+            var arrayLength = selected_vertex_type_urns.length;
+            for (var i = 0; i < arrayLength; i++) {
+               selected_vertex_type_urn = selected_vertex_type_urns[i];
+	       encoded_selected_vertex_type_urns.push(encodeURIComponent(selected_vertex_type_urn));			 
+            }
+            selected_vertex_type_urns_str = encoded_selected_vertex_type_urns.join();				
+            $.get("./get_adjacent_edge_types", { vertex_type_urns: selected_vertex_type_urns_str })
+              .done(function( data ) {
+                $("#adjacent-edge-types-panel-content").html(data);
+                $("#adjacent-edge-types-panel-content-listview").listview().listview('refresh');
+              });
+	     });  // update adjacent edge types
+                      
+         // Selected Vertices Panel METHODS
+         $("#update-selected-vertices-edges-panel").click(function(e) {
+            var encoded_selected_vertex_urns = [];
+            var selected_vertex_urns = Object.keys(selected_asset_urns);
+            var arrayLength = selected_vertex_urns.length;
+            for (var i = 0; i < arrayLength; i++) {
+               selected_vertex_urn = selected_vertex_urns[i];				
+               encoded_selected_vertex_urns.push(encodeURIComponent(selected_vertex_urn));
+            }         
+            selected_vertex_urns_str = encoded_selected_vertex_urns.join();				
+            $.get("./get_vertices_edges_data", { vertex_urns: selected_vertex_urns_str, edge_urns: selected_edge_urns })
+              .done(function( data ) {
+                $("#selected-vertices-edges-panel-content").html(data);
+                $("#selected-vertices-edges-panel-content-listview").listview().listview('refresh');
+              });
+	  });  // update selected vertices
+
+	  $("#update-apply-stylesheet-panel").click(function(e) {
+		 $.get("./get_stylesheets")
+		   .done(function(data) {
+		     $("#apply-stylesheet-panel-content").html(data);
+		     $("#apply-stylesheet-panel-content-listview").listview().listview('refresh');
+		   });
+	  });  // update apply stylesheet panel 		 			
+
+      }); // on ready
+
+      function apply_stylesheet(style_name) {
+	  var url = null;
+	  if ( "urn-cptl-HOST-tld" == style_name ) {
+	      url = "./static/styles/tld.style";
+	  } else if ( "urn-cptl-HOST-cc" == style_name ) {
+	      url = "./static/styles/cc.style";
+	  } else {
+	      alert("No style found: " + style_name);
+	  }
+	  $.get(url)
+	      .done(function(data) {
+		      style_list = parse_stylesheet(data);
+	      });
+      }
+       
+      function parse_stylesheet(data) { 
+	  var lines = data.split("\n");
+	  var style_list = [];
+	  for (var i = 0; i < lines.length; i++) {
+	      var line = lines[i];
+	      if ( "name" != line.substring(0,4) && "//" != line.substring(0,2) ) {
+		  style_list.push(line);
+	      }
+	  }
+	  set_graph_nodes_style(style_list);
+      }
+
+      function set_graph_nodes_style(style_list) {
+	  var svg = d3.select("#" + svg_graph_id);
+	  var nodes = svg.selectAll(".node")[0];
+	  for (var i = 0; i < nodes.length; i++) {
+	      node = d3.select(nodes[i]);
+	      for (var j=0; j < style_list.length; j++) {
+		  style = style_list[j].split(",");
+		  
+		  vertex_attribute= style[0]; //node_key
+		  operation = style[1];
+		  vertex_attribute_value = style[2];
+		  style_attribute = style[3];  //style_key
+		  style_attribute_value = style[4];  //style_value
+		  
+		  //alert("VA: " + vertex_attribute + "OP: " + operation + "VAV: " + vertex_attribute_value + "SA: " + style_attribute + "SAV:" + style_attribute_value);		  
+	          if ( null != node.attr(vertex_attribute) ) {
+		      if ( "VERTEX_LABEL" == style_attribute && "VALUE" == style_attribute_value ) {
+			  node.select("text")
+			      .text( node.attr(vertex_attribute));
+		      } else if ("NORMALIZE_VALUE" == style_attribute_value.substring(0,15) && "r" == style_attribute) {
+			  try {
+			      var start = style_attribute_value.indexOf("(") + 1;
+			      var end = style_attribute_value.indexOf(")");
+			      var denominator = style_attribute_value.substring(start, end);
+			      var node_attr_value = node.attr(vertex_attribute);
+			      if (node_attr_value.indexOf(",") > -1) {
+				  node_attr_value = node_attr_value.split(",")[1];
+			      }
+			      var new_radius = parseFloat(node_attr_value);
+			      new_radius = new_radius / parseFloat(denominator);
+			      if (new_radius > 40) { new_radius = 40; }
+			      node.select("circle").attr(style_attribute, new_radius.toString() );
+			  } catch(err) {
+			      alert(err);
+			  }
+			  continue;
+		      } else {
+			  node.select("circle").style(style_attribute, style_attribute_value);
+		      }
+		  }
+	      }
+	  }
+       }
+
+      function update_graph_panel(datasource, selected_vertex_urns) {
+            //e_selected_asset_refs = encodeURIComponent(selected_asset_refs);
+            //e_selected_edge_type_refs = encodeURIComponent(selected_edge_type_refs);
+            //+ "vertex_refs=" + e_selected_asset_refs + "&edge_type_refs=" + e_selected_edge_type_refs;  
+
+            // Set up the visualization
+            d3.select("#" + svg_graph_id).remove();                
+            var svg = d3.select("#" + container_id).append("svg")
+              .attr("width", width)
+              .attr("height", height)
+	      .attr("id", svg_graph_id);
+            svg.append("rect")
+	      .attr("class", "background")
+	      .attr("width", width)
+	      .attr("height", height);
+
+	    url = "./get_graph";
+	    request_params = {};
+	    if (datasource != null) {
+		url += "?datasource=" + datasource;
+	    } 
+	    if (selected_vertex_urns != null) {
+                url += "&selected_vertex_urns=" + selected_vertex_urns;
+            }
+	    //alert(url);
+	    d3.json(url, function( data ) {
+                visualize_graph(svg_graph_id, svg, data, vis_type, width, height);
+                svg.selectAll(".node")
+                  .attr("id", function(d) { return d.id; })
+		  .attr("urn_id", function(d) { return d.urn_id; })
+                  .attr("type", function(d) { return d.asset_type_urn; })
+		    .attr("urn-cptl-HOST-ipv4", function(d) { return d["urn-cptl-HOST-ipv4"];})
+		    .attr("urn-cptl-HOST-hostname", function(d) { return d["urn-cptl-HOST-hostname"];})
+		    .attr("urn-cptl-HOST-tag-tldcount", function(d) { return d["urn-cptl-HOST-tag-tldcount"];})
+		    .attr("urn-cptl-HOST-tag-cccount", function(d) { return d["urn-cptl-HOST-tag-cccount"];})
+		    
+                  .on("click", function(d) { 
+                     if ( ! selected_asset_urns[d.urn_id] ) {
+                       selected_asset_urns[d.urn_id] = true;
+                       update_selected_asset_type_urns(selected_asset_type_urns, d.asset_type_urn, "ADD");
+                     } else {
+                       delete selected_asset_urns[d.urn_id]
+		       update_selected_asset_type_urns(selected_asset_type_urns, d.asset_type_urn, "DELETE");
+                     }
+		  })
+		  .append("svg:title")
+		    .html(function(d) { return get_node_info(d); });		
+		}); //D3.JSON
+            //e.preventDefault();	  
+      }
+
+      function get_node_info(d) {
+	  result = ""
+	      info_keys = ["id", "urn_id", "type", "urn-cptl-HOST-ipv4", "urn-cptl-HOST-hostname", "urn-cptl-HOST-tag-tldcount", "urn-cptl-HOST-tag-cccount"];
+	  for (var i = 0; i < info_keys.length; i++) {
+	      key = info_keys[i];
+	      if (d[key] != null) {
+		  result += key + ":" + d[key] + "\n\n";
+	      }
+          }
+	  return result;
+      }
+
+      function update_selected_asset_type_urns( selected_asset_type_urns, asset_type_urn, op ) {
+        if ( (!selected_asset_type_urns[asset_type_urn]) && op == "ADD") {
+          selected_asset_type_urns[asset_type_urn] = 1;
+        } else if ( selected_asset_type_urns[asset_type_urn] >= 1  && op == "ADD" ) {
+          selected_asset_type_urns[asset_type_urn] += 1;
+        } else if ( selected_asset_type_urns[asset_type_urn] > 1 && op == "DELETE" ) {
+          selected_asset_type_urns[asset_type_urn] -= 1;
+        } else if ( selected_asset_type_urns[asset_type_urn] == 1 && op == "DELETE" ) {
+          delete selected_asset_type_urns[asset_type_urn];
+        } else {
+          alert("Selected asset type URNs is in a bad state!:" + selected_asset_type_urns[asset_type_urn] + "," + op );
+        }
+      }
+   
+     function get_infosource(datasource) {
+	 var selected_vertex_urns = Object.keys(selected_asset_urns);
+
+	 if ("urn:badger:get_host_dest_ips" == datasource ||
+	     "urn:badger:get_hostip_dest_hostnames" == datasource ||
+	     "urn:badger:get_host_dest_tldcounts" == datasource ||
+	     "urn:badger:get_host_dest_cccounts" == datasource ) {
+	     encoded_selected_vertex_urns = [];
+	     for (var i = 0; i < selected_vertex_urns.length; i++) {
+		 selected_vertex_urn = selected_vertex_urns[i];
+		 encoded_selected_vertex_urns.push(encodeURIComponent(selected_vertex_urn));
+	     }
+	     encoded_selected_vertex_urns_str = encoded_selected_vertex_urns.join();
+	     update_graph_panel(datasource, encoded_selected_vertex_urns_str);	     
+	 } else {
+	     alert ("Unrecognized datasource: " + datasource);
+	 }
+     }
+    </script>
+    
+  </head>
+  <body>
+    <div data-role="page">
+
+      <div data-role="header"> 
+	<h1>Pandect CPTL Browser</h1>
+      </div> <!-- header -->
+      
+      <div data-role="content">
+
+	<!-- The Graph Panel -->
+	<div id="graph-panel" class="ui-helper-reset ui-helper-clearfix">
+	  <h3 id="graph-panel-header" class="ui-widget-header">
+	    Graph (<a id="update-graph-panel">reload</a>)</h3>
+	  <div id="graph-panel-content">
+	    <svg id="graph-panel-content-svg"/>
+          </div>
+	</div>
+
+	<div id="side-panels">
+	  <!-- The Adjacent Edge Types Panel -->
+	  <div id="adjacent-edge-types-panel" class="ui-helper-reset ui-helper-clearfix">
+	    <h3 id="adjacent-edge-types-panel-header" class="ui-widget-header">
+	      Adjacent Edge Types (<a id="update-adjacent-edge-types-panel">reload</a>)</h3>
+	    <div id="adjacent-edge-types-panel-content">
+	      <ul id="adjacent-edge-types-panel-content-listview" data-role="listview" data-inset="true">
+              </ul>
+            </div>
+          </div>
+	  
+	  <!-- The Selected Vertices Panel -->
+	  <div id="selected-vertices-edges-panel" class="ui-helper-reset ui-helper-clearfix">
+	    <h3 id="selected-vertices-edges-panel-header" class="ui-widget-header">
+	      Selected Vertices and Edges (<a id="update-selected-vertices-edges-panel">reload</a>)</h3>
+	    <div id="selected-vertices-edges-panel-content">
+	      <ul id="selected-vertices-edges-panel-content-listview" data-role="listview" data-inset="true">
+              </ul>
+            </div>
+          </div>
+
+	 <!-- The Apply Stylesheet Panel -->
+	 <div id="apply-stylesheet-panel" class="ui-helper-reset ui-helper-clearfix">
+	    <h3 id="apply-stylesheet-panel-header" class="ui-widget-header">
+	      Apply Stylesheet to Selected (<a id="update-apply-stylesheet-panel">reload</a>)</h3>
+	    <div id="apply-stylesheet-panel-content">
+	      <ul id="apply-stylesheet-panel-content-listview" data-role="listview" data-inset="true">
+              </ul>
+            </div>
+         </div>
+
+	</div> <!-- side panels -->
+
+
+
+      </div> <!-- content -->
+    </div> <!-- page -->
+  </body>  
+</html>

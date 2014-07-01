@@ -1,0 +1,39 @@
+1.  You will need to get libcptl > v0.3 from https://github.com/ITI/cptl-power/
+2.  You will need CherryPy (http://www.cherrypy.org)
+3.  You will also need NetworkX (https://networkx.github.io)
+
+G E T T I N G  S T A R T E D
+c o n f i g
+0.  Open 'config.cfg' and set 'pandect_home_dir' to the path of this README's parent directory
+
+s t a r t  p a n d e c t
+1.  bash$ ./startup.sh
+2.  Open a browser (tested on Chrome/Firefox so far) and go to localhost:8080
+
+e x p l o r e   a s s e t s
+3.  Click on the 'Graph' header's 'reload' link to bring up sample machines found
+     via NMap on a Home Area Network
+4.  Mouseover the blue dots (hosts) to see their information
+5.  Click on the blue dots to select them.
+    - To see what you have selected, click on the 'Selected Vertices and Edges' header's 'reload' link.
+    - Re-click on a dot to unselect (refresh via the 'Selected Vertices and Edges' header's 'reload' link.
+
+g e t  m o r e  i n f o
+6.  Click on the 'Adjacent Edge Types' header's 'reload' link.
+
+TOP LEVEL DOMAINS (TLD)s
+7.  Click on 'Get Dest TLDs' to load up the destination top level domains (and counts) for the selected vertices.
+8.  Style the new information by clicking on the 'Apply Stylesheet to Selected' header's 'reload' link.
+    + Now select 'Style TLDs'
+
+COUNTRY CODES (CC)s
+9.  Click on 'Get Dest Country Codes ' to load up the destination country codes (and counts) for the selected vertices.
+10.  Style the new information by clicking on the 'Apply Stylesheet to Selected' header's 'reload' link.
+    + Now select 'Style Country Codes'
+
+DEST HOSTNAMES/IPs
+11.  You can click on these, but it will take a lot of time and give you a hairball of links.  We will address this 
+    by presenting the graph in an alternate manner.
+
+L I C E N S I N G 
+Our software is 100 percent GPL.

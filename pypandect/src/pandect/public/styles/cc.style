@@ -1,0 +1,4 @@
+urn-cptl-HOST-ipv4,=,*,fill,green
+urn-cptl-HOST-tag-cccount,=,*,fill,orange
+urn-cptl-HOST-tag-cccount,=,*,r,NORMALIZE_VALUE(5.0)
+urn-cptl-HOST-tag-cccount,=,*,VERTEX_LABEL,VALUE

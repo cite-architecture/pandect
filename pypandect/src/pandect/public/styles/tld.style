@@ -1,0 +1,14 @@
+name:Style 1
+// All vertices with attribute 'urn-cptl-HOST-ipv4' equal to anything, fill green
+urn-cptl-HOST-ipv4,=,*,fill,green
+// All vertices with attribute 'urn-cptl-HOST-ipv4' equal to 192.168.1.68, adjust size
+urn-cptl-HOST-ipv4,=,192.168.1.68,r,NORMALIZE_VALUE(20.0)
+// All vertices with attribute 'urn-cptl-HOST-tag-tldcount' equal to anything, fill red
+urn-cptl-HOST-tag-tldcount,=,*,fill,red
+urn-cptl-HOST-tag-cccount,=,*,fill,orange
+// All vertices with attribute 'urn-cptl-HOST-tag-tldcount' equal to anything, adjust size
+urn-cptl-HOST-tag-tldcount,=,*,r,NORMALIZE_VALUE(5.0)
+urn-cptl-HOST-tag-cccount,=,*,r,NORMALIZE_VALUE(5.0)
+// Set the label
+urn-cptl-HOST-tag-tldcount,=,*,VERTEX_LABEL,VALUE
+urn-cptl-HOST-tag-cccount,=,*,VERTEX_LABEL,VALUE
