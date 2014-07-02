@@ -8,13 +8,14 @@ n e t w o r k x
 c p t l
 1.  bash$ git clone https://github.com/ITI/cptl-power/
 2.  cd cptl-power
-3.  git checkout v0.4       
+3.  git checkout v0.5       
 4.  make validate
 5.  make test
 
 G E T T I N G  S T A R T E D
 c o n f i g
 0.  Open 'config.cfg' and set 'pandect_home_dir' to the path of this README's parent directory
+1.  Open the startup.sh file and change the LIBCPTL_PATH to the distribution of CPTL ('cptl-power' mentioned above)
 
 s t a r t  p a n d e c t
 1.  bash$ ./startup.sh
