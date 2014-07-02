@@ -11,7 +11,7 @@ function visualize_graph_force_directed_fisheye(svg_graph_id, svg, data, width, 
     var color = d3.scale.category20();
     
     var fisheye = d3.fisheye.circular()
-      .radius(120);
+      .radius(1);
 
     var force = d3.layout.force()
 	.charge(-900)
